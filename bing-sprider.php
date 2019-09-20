@@ -1,79 +1,40 @@
 <?php
-//根据测试发现必应每日一图api中会根据请求头中的cookie来判断是返回国内版还是国际版每日一图
-$ensearchs = array(
-    'cn' => 0, //国内版
-    'en' => 1 //国际版
-);
+require_once('./language-list.php');
+
+//更新Git账号信息为爬虫账号信息并同步更新仓库最新代码
+exec('git config --local user.name "Sprider"');
+exec('git config --local user.email "sprider@klavor"');
+exec('git pull');
+
+$language_list = get_language_list();
 //遍历数组
-foreach ($ensearchs as $ensearch_key => $ensearch_value) {
-    //更新Git账号信息为爬虫账号信息并同步更新仓库最新代码
-    exec('git config --local user.name "Sprider"');
-    exec('git config --local user.email "sprider@klavor"');
-    exec('git pull');
+foreach ($language_list as $language => $country) {
+    //定义url相关信息
+    $bing_domain   = 'https://global.bing.com';
+    $bing_json_url = $bing_domain . '/HPImageArchive.aspx?setmkt=' . $language . '&setlang=' . $language . '&ensearch=0&format=js&idx=0&n=1&pid=hp&quiz=1&og=1&uhd=0';
     
-    //定义存储数据的文件夹名称
-    $bing_json_dir  = 'json/' . date('Y') . '/' . date('m');
-    //获取目录路径（如"./en/json"）
-    $bing_json_path = $ensearch_key . '/' . $bing_json_dir;
-    //判断文件是否存在，如果不存在则创建目录
-    if (!file_exists($bing_json_path)) {
-        mkdir($bing_json_path, 777, true);
-        echo 'json文件夹不存在,已创建成功！
-';
-    }
-    //拼接api数据的文件路径
-    $file_path = $bing_json_path . '/' . date('Y-m-d') . '.json';
-    echo '文件名称:' . $file_path . '
-';
-    $bing_json_url = '"https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&pid=hp&ensearch=' . $ensearch_value . '&quiz=1&og=1&uhd=0"';
-    //请求网络获取api数据
-    echo '正在下载今日bing数据...
-';
+    
     //拼接下载命令
-    $download_cmd = 'wget -O ' . $file_path . ' ' . $bing_json_url;
-    echo $download_cmd . '
+    $json_temp_path = time() . '.json';
+    
+    $download_cmd = 'wget -O ' . $json_temp_path . ' "' . $bing_json_url . '"';
+    echo 'Bing daily image api json downloan command: ' . $download_cmd . '
 ';
     //执行文件下载
     exec($download_cmd);
-    //不知道为什么用下面的方法会报异常
-    ////PHP Warning:
-    ////		file_get_contents("https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1"):
-    ////		failed to open stream: No such file or directory in /root/photo-collections/bing-sprider.php on line 36
-    ////Warning: 
-    ////      file_get_contents("https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1"):
-    ////		failed to open stream: No such file or directory in /root/photo-collections/bing-sprider.php on line 36
-    //$request_array = array(
-    //    'http' => array(
-    //       'header' => 'cookie:ENSEARCH=BENVER=' . $ensearch_value,
-    //        'authority' => 'www.bing.com',
-    //        'method' => 'GET',
-    //        'path' => '/HPImageArchive.aspx?format=js&idx=0&n=1',
-    //        'scheme' => 'http'
-    //    )
-    //);
-    //var_dump($request_array);
-    //$request_context = stream_context_create($request_array);
-    //$json_content = file_get_contents($bing_json_url, false, $request_context);
-    //$json_content = fopen($bing_json_url, 'r', false, $request_context);
-    echo '今日bing数据下载成功！
-';
     
-    //file_put_contents($file_path, $json_content);
+    
     //从本地读取下载好的api数据
-    $file_open    = fopen($file_path, 'r');
-    $json_content = fread($file_open, filesize($file_path));
-    //转换成json对象
-    //$json_obj = json_decode($json_content, true);
-    $json_obj     = json_decode($json_content, false);
+    $json_temp_content = file_get_contents($json_temp_path);
     
-    //var_dump($json_obj);
-    //var_dump($json_obj->images);
+    //转换成json对象
+    $json_obj = json_decode($json_temp_content, false);
+    
     //取出images数组，由于调用api时n=1,所以数字的length=1
     $images = $json_obj->images;
     
     //取出图片对象
     $image = $images[0];
-    //var_dump($image);
     
     //取出变量
     $title         = $image->title;
@@ -105,56 +66,109 @@ foreach ($ensearchs as $ensearch_key => $ensearch_value) {
         $copyrightonly = substr(strrchr($copyright, '('), 1, -1);
     }
     
-    $file_name = substr(strrchr($urlbase, '='), 1);
-    
-    $image_count = 0;
-    
-    //修改json文件名称
-    //exec('mv ' . $file_path . ' ' . $bing_json_path . '/' . $file_name . '.json');
-    
-    //$json_content = file_get_contents($bing_json_url);
-    //$json_obj = json_decode($json_content, true);
-    $bing_site      = 'https://www.bing.com';
-    //拼接域名获取到完整的图片地址
-    $bing_image_url = $bing_site . $url;
-    $sub_image_dir  = substr($startdate, 0, -2);
-    $sub_image_dir  = substr_replace($sub_image_dir, '/', 4, 0);
-    //拼接图片存储文件夹路径
-    $image_dir      = $ensearch_key . '/' . $sub_image_dir;
-    if (!file_exists($image_dir)) {
-        mkdir($image_dir, 777, true);
-    }
-    //生成图片文件名
-    $image_name = $file_name . '.jpg';
-    //拼接图片文件路径
-    $image_path = $image_dir . '/' . $image_name;
-    //判断图片是否存在，不存在则下载图片
-    if (!file_exists($image_path)) {
-        $image_count++;
-        //拼接下载图片命令
-        $image_download_cmd = 'wget -O ' . $image_path . ' "' . $bing_image_url . '"';
-        echo $image_download_cmd . '
+    $request_year  = substr($startdate, 0, 4);
+    $request_month = substr($startdate, 4, 2);
+    $request_day   = substr($startdate, -2);
+    echo 'request_year = ' . $request_year . '; request_month = ' . $request_month . '; request_day = ' . $request_day . '
 ';
-        //执行图片下载命令
-        exec($image_download_cmd);
-        echo 'bing每日一图下载完成！
+    
+    
+    //移动json文件到对应目录下
+    //定义存储数据的文件夹名称
+    $bing_json_path = $country . '/' . 'json/' . $request_year . '/' . $request_month;
+    //判断文件是否存在，如果不存在则创建目录
+    if (!file_exists($bing_json_path)) {
+        mkdir($bing_json_path, 777, true);
+        echo 'Create json folder success!
 ';
     } else {
-        echo '图片已存在！
+        echo 'Json folder exists！
 ';
+    }
+    
+    //移动文件到json文件夹下存储
+    $json_new_name     = $request_year . '-' . $request_month . '-' . $request_day . '.json';
+    $json_move_command = 'mv ' . $json_temp_path . ' ' . $bing_json_path . '/' . $json_new_name;
+    echo 'Json move command: ' . $json_move_command . '
+';
+    exec($json_move_command);
+    
+    
+    //计算，用于判断是否提交git仓库还是还原操作
+    $image_count = 0;
+    
+    
+    //拼接域名获取到完整的图片地址
+    $bing_image_url = $bing_domain . $url;
+    //拼接图片存储文件夹路径
+    $bing_image_dir = 'image';
+    if (!file_exists($bing_image_dir)) {
+        mkdir($bing_image_dir, 777, true);
+        echo 'Create bing daily image folder success!
+';
+    } else {
+        echo 'Bing daily image folder exists!
+';
+    }
+    
+    
+    //生成图片文件名
+    $bing_image_name = substr(strrchr($urlbase, '='), 1) . '.jpg';
+    //拼接图片文件路径
+    $bing_image_path = $bing_image_dir . '/' . $bing_image_name;
+    //判断图片是否存在，不存在则下载图片
+    if (!file_exists($bing_image_path)) {
+        $image_count++;
+        
+        //拼接下载图片命令
+        $bing_image_download_cmd = 'wget -O ' . $bing_image_path . ' "' . $bing_image_url . '"';
+        echo 'Bing daily image downloan command: ' . $bing_image_download_cmd . '
+';
+        //执行图片下载命令
+        exec($bing_image_download_cmd);
+        echo 'Download bing daily image success!
+';
+    } else {
+        echo 'Bing daily image exists!
+';
+    }
+    
+    //获取图片的sha256
+    $bing_image_sha256      = hash_file('sha256', $bing_image_path);
+    $bing_image_sha256_name = $bing_image_sha256 . '.jpg';
+    $bing_image_sha256_path = $bing_image_dir . '/' . $bing_image_sha256_name;
+    if (!file_exists($bing_image_sha256_path)) {
+        //图片如果不存在则重命名
+        rename($bing_image_path, $bing_image_sha256_path);
+    } else {
+        //文件已存在，将此次下载的图片删除
+        unlink($bing_image_path);
     }
     
     //水印图片下载
     $og_image_name = substr(strrchr($og_img, '='), 1);
-    $og_image_path = $image_dir . '/' . $og_image_name;
+    $og_image_path = $bing_image_dir . '/' . $og_image_name;
     if (!file_exists($og_image_path)) {
         $image_count++;
+        
         exec('wget -O ' . $og_image_path . ' "' . $og_img . '"');
-        echo 'bing水印图片下载完成！
+        echo 'Downloa og image success!
 ';
     } else {
-        echo 'bing水印图片已存在！
+        echo 'Og image exists!
 ';
+    }
+    
+    //获取图片的sha256
+    $og_image_sha256      = hash_file('sha256', $og_image_path);
+    $og_image_sha256_name = $og_image_sha256 . '.jpg';
+    $og_image_sha256_path = $bing_image_dir . '/' . $og_image_sha256_name;
+    if (!file_exists($og_image_sha256_path)) {
+        //图片如果不存在则重命名
+        rename($og_image_path, $og_image_sha256_path);
+    } else {
+        //文件已存在，将此次下载的图片删除
+        unlink($og_image_path);
     }
     
     //拼接对外公布的接口数据
@@ -167,28 +181,32 @@ foreach ($ensearchs as $ensearch_key => $ensearch_value) {
     $api_json->copyrightlink = $copyrightlink;
     $api_json->date          = $startdate;
     $api_json_image          = new stdClass();
-    $api_json_image->hd      = $image_path;
-    $api_json_image->tmp     = $og_image_path;
-    $api_json_image->oghd    = $bing_image_url;
-    $api_json_image->ogtmp   = $og_img;
+    $api_json_image->name    = $bing_image_name;
+    $api_json_image->hd      = '/' . $bing_image_sha256_path;
+    $api_json_image->tmp     = '/' . $og_image_sha256_path;
+    $api_json_image->binghd  = $bing_image_url;
+    $api_json_image->bingtmb = $og_img;
     $api_json->image         = $api_json_image;
     
-    //定义存储api数据的文件夹名称
-    $api_json_dir  = 'api/' . date('Y') . '/' . date('m');
     //获取目录路径（如"./en/api"）
-    $api_json_path = $ensearch_key . '/' . $api_json_dir;
+    $api_json_path = $country . '/api/' . $request_year . '/' . $request_month;
     //判断文件是否存在，如果不存在则创建目录
     if (!file_exists($api_json_path)) {
         mkdir($api_json_path, 777, true);
-        echo 'api文件夹不存在,已创建成功！
+        echo 'Create api folder success!
+';
+    } else {
+        echo 'Api folder exists!
 ';
     }
-    //拼接api数据的文件路径
-    $api_file_path = $api_json_path . '/' . date('Y-m-d') . '.json';
-    echo '文件名称:' . $api_file_path . '
-';
-    file_put_contents($api_file_path, urldecode(json_encode($api_json)));
     
+    //拼接api数据的文件路径
+    $api_file_path = $api_json_path . '/' . $request_year . '-' . $request_month . '-' . $request_day . '.json';
+    echo 'Api json path: ' . $api_file_path . '
+';
+    file_put_contents($api_file_path, json_encode($api_json, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+    
+    //判断是否继续后续流程。只有在有图片更新的情况下才继续后续流程。
     if ($image_count == 0) {
         //没有下载任何图片，则将仓库重置
         $reset_cmd = 'git add --all .;';
@@ -197,8 +215,9 @@ foreach ($ensearchs as $ensearch_key => $ensearch_value) {
         continue;
     }
     
+    
     //拼接git提交所需要的comment信息
-    $comment = 'Title: ' . $title . '
+    $comment = '【' . $language . '】' . $title . '
 ';
     $comment .= 'Caption: ' . $caption . '
 ';
@@ -233,31 +252,11 @@ foreach ($ensearchs as $ensearch_key => $ensearch_value) {
     $comment .= 'Og Hash: ' . $og_hash . '
 ';
     
-    //拼接git提交的shell脚本
-    //$git_cmd = 'git config --local user.name "Sprider";';
-    //$git_cmd .= 'git config --local user.email "sprider@klavor";';
-    //$git_cmd .= 'git pull;';
-    //$git_cmd .= 'git add --all .;';
-    //$git_cmd .= 'git commit -m "' . $comment . '";';
-    //$git_cmd .= 'git push;';
-    //$git_cmd .= 'git config --local user.name "Klavor Lee";';
-    //$git_cmd .= 'git config --local user.email "lee@klavor.com";';
-    
-    //将shell脚本输出到本地，需要注意的是需要可执行权限。否则不能执行shell脚本，从而导致提交代码失败。
-    //$shell_path = 'git.sh';
-    //file_put_contents($shell_path, $git_cmd);
-    //chmod($shell_path, 777);
-    //执行shell脚本
-    //exec('./git.sh');
-    
-    //下面的方式不能够正常运行，因此替换成了shell脚本的方式
-    ////报错信息：
-    ////Vim：Warning：Output is not to a terminal
     //提交爬取数据
     exec('git add --all .');
     exec('git commit -m "' . $comment . '";');
     exec('git push');
-    //还原Git账号信息
-    exec('git config --local user.name "Klavor Lee"');
-    exec('git config --local user.email "lee@klavor.com"');
 }
+//还原Git账号信息
+exec('git config --local user.name "Klavor Lee"');
+exec('git config --local user.email "lee@klavor.com"');

@@ -13,7 +13,7 @@ foreach ($language_list as $language => $country) {
     //定义url相关信息
     $bing_domain   = 'https://global.bing.com';
 	$bing_image_domain = 'https://cn.bing.com';
-    $bing_json_url = $bing_domain . '/HPImageArchive.aspx?setmkt=' . $language . '&setlang=' . $language . '&ensearch=0&format=js&idx=3&n=1&pid=hp&quiz=1&og=1&uhd=0';
+    $bing_json_url = $bing_domain . '/HPImageArchive.aspx?setmkt=' . $language . '&setlang=' . $language . '&ensearch=0&format=js&idx=2&n=1&pid=hp&quiz=1&og=1&uhd=0';
 	
 	
 	//计算，用于判断是否提交git仓库还是还原操作

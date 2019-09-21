@@ -75,7 +75,7 @@ foreach ($language_list as $language => $country) {
     
     //移动json文件到对应目录下
     //定义存储数据的文件夹名称
-    $bing_json_path = $country . '/' . 'json/' . $request_year . '/' . $request_month;
+    $bing_json_path = $language . '/' . 'json/' . $request_year . '/' . $request_month;
     //判断文件是否存在，如果不存在则创建目录
     if (!file_exists($bing_json_path)) {
         mkdir($bing_json_path, 777, true);
@@ -189,7 +189,7 @@ foreach ($language_list as $language => $country) {
     $api_json->image         = $api_json_image;
     
     //获取目录路径（如"./en/api"）
-    $api_json_path = $country . '/api/' . $request_year . '/' . $request_month;
+    $api_json_path = $language . '/api/' . $request_year . '/' . $request_month;
     //判断文件是否存在，如果不存在则创建目录
     if (!file_exists($api_json_path)) {
         mkdir($api_json_path, 777, true);

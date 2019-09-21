@@ -1,5 +1,6 @@
 <?php
 require_once('./language-list.php');
+require_once('./function.php');
 
 //更新Git账号信息为爬虫账号信息并同步更新仓库最新代码
 exec('git config --local user.name "Sprider"');
@@ -11,28 +12,23 @@ $language_list = get_language_list();
 foreach ($language_list as $language => $country) {
     //定义url相关信息
     $bing_domain   = 'https://global.bing.com';
-    $bing_json_url = $bing_domain . '/HPImageArchive.aspx?setmkt=' . $language . '&setlang=' . $language . '&ensearch=0&format=js&idx=6&n=1&pid=hp&quiz=1&og=1&uhd=0';
+	$bing_image_domain = 'https://cn.bing.com';
+    $bing_json_url = $bing_domain . '/HPImageArchive.aspx?setmkt=' . $language . '&setlang=' . $language . '&ensearch=0&format=js&idx=5&n=1&pid=hp&quiz=1&og=1&uhd=0';
+	
+	
+	//计算，用于判断是否提交git仓库还是还原操作
+    $file_count = 0;
+	
     
-    
-    //拼接下载命令
-    $json_temp_path = time() . '.json';
-    
-    $download_cmd = 'wget -O ' . $json_temp_path . ' "' . $bing_json_url . '"';
-    echo 'Bing daily image api json downloan command: ' . $download_cmd . '
-';
-    //执行文件下载
-    exec($download_cmd);
-    
-    
-    //从本地读取下载好的api数据
-    $json_temp_content = file_get_contents($json_temp_path);
-    
+    $bing_json_data = file_get_contents_retry($bing_json_url);
+	if ($bing_json_data === false) {
+		continue;
+	}
     //转换成json对象
-    $json_obj = json_decode($json_temp_content, false);
+    $json_obj = json_decode($bing_json_data, false);
     
     //取出images数组，由于调用api时n=1,所以数字的length=1
     $images = $json_obj->images;
-    
     //取出图片对象
     $image = $images[0];
     
@@ -55,6 +51,9 @@ foreach ($language_list as $language => $country) {
     $og_desc       = $image_og->desc;
     $og_img        = $image_og->img;
     $og_hash       = $image_og->hash;
+	
+	//获取bing原文件名
+    $bing_image_name = substr(strrchr($urlbase, '='), 1) . '.jpg';
     
     if (empty($title)) {
         $title = strstr($copyright, '(', true);
@@ -88,18 +87,15 @@ foreach ($language_list as $language => $country) {
     
     //移动文件到json文件夹下存储
     $json_new_name     = $request_year . '-' . $request_month . '-' . $request_day . '.json';
-    $json_move_command = 'mv ' . $json_temp_path . ' ' . $bing_json_path . '/' . $json_new_name;
-    echo 'Json move command: ' . $json_move_command . '
-';
-    exec($json_move_command);
-    
-    
-    //计算，用于判断是否提交git仓库还是还原操作
-    $image_count = 0;
+    $json_new_path = $bing_json_path . '/' . $json_new_name;
+	if (!file_exists($json_new_path)) {
+		$file_count++;
+		file_put_contents($json_new_path, $bing_json_data);
+	}
     
     
     //拼接域名获取到完整的图片地址
-    $bing_image_url = $bing_domain . $url;
+    $bing_image_url = $bing_image_domain . $url;
     //拼接图片存储文件夹路径
     $bing_image_dir = 'image';
     if (!file_exists($bing_image_dir)) {
@@ -111,65 +107,35 @@ foreach ($language_list as $language => $country) {
 ';
     }
     
-    
-    //生成图片文件名
-    $bing_image_name = substr(strrchr($urlbase, '='), 1) . '.jpg';
-    //拼接图片文件路径
-    $bing_image_path = $bing_image_dir . '/' . $bing_image_name;
-    //判断图片是否存在，不存在则下载图片
-    if (!file_exists($bing_image_path)) {
-        $image_count++;
-        
-        //拼接下载图片命令
-        $bing_image_download_cmd = 'wget -O ' . $bing_image_path . ' "' . $bing_image_url . '"';
-        echo 'Bing daily image downloan command: ' . $bing_image_download_cmd . '
-';
-        //执行图片下载命令
-        exec($bing_image_download_cmd);
-        echo 'Download bing daily image success!
-';
-    } else {
-        echo 'Bing daily image exists!
-';
-    }
-    
+    $bing_image_data        = file_get_contents_retry($bing_image_url);
+	if ($bing_image_data === false) {
+	    reset_git();
+        continue;
+	}
     //获取图片的sha256
-    $bing_image_sha256      = hash_file('sha256', $bing_image_path);
+    $bing_image_sha256      = hash('sha256', $bing_image_path);
     $bing_image_sha256_name = $bing_image_sha256 . '.jpg';
     $bing_image_sha256_path = $bing_image_dir . '/' . $bing_image_sha256_name;
     if (!file_exists($bing_image_sha256_path)) {
-        //图片如果不存在则重命名
-        rename($bing_image_path, $bing_image_sha256_path);
-    } else {
-        //文件已存在，将此次下载的图片删除
-        unlink($bing_image_path);
+        $file_count++;
+        file_put_contents($bing_image_sha256_path, $bing_image_data);
     }
     
-    //水印图片下载
-    $og_image_name = substr(strrchr($og_img, '='), 1);
-    $og_image_path = $bing_image_dir . '/' . $og_image_name;
-    if (!file_exists($og_image_path)) {
-        $image_count++;
-        
-        exec('wget -O ' . $og_image_path . ' "' . $og_img . '"');
-        echo 'Downloa og image success!
-';
-    } else {
-        echo 'Og image exists!
-';
-    }
     
+    $og_image_data        = file_get_contents_retry($og_img);
+	if ($og_image_data === false) {
+		reset_git();
+        continue;
+	}
     //获取图片的sha256
-    $og_image_sha256      = hash_file('sha256', $og_image_path);
+    $og_image_sha256      = hash('sha256', $og_image_data);
     $og_image_sha256_name = $og_image_sha256 . '.jpg';
     $og_image_sha256_path = $bing_image_dir . '/' . $og_image_sha256_name;
     if (!file_exists($og_image_sha256_path)) {
-        //图片如果不存在则重命名
-        rename($og_image_path, $og_image_sha256_path);
-    } else {
-        //文件已存在，将此次下载的图片删除
-        unlink($og_image_path);
+        $file_count++;
+        file_put_contents($og_image_sha256_path, $og_image_data);
     }
+    
     
     //拼接对外公布的接口数据
     $api_json                = new stdClass();
@@ -207,11 +173,8 @@ foreach ($language_list as $language => $country) {
     file_put_contents($api_file_path, json_encode($api_json, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
     
     //判断是否继续后续流程。只有在有图片更新的情况下才继续后续流程。
-    if ($image_count == 0) {
-        //没有下载任何图片，则将仓库重置
-        $reset_cmd = 'git add --all .;';
-        $reset_cmd .= 'git reset --hard HEAD';
-        exec($reset_cmd);
+    if ($file_count == 0) {
+        reset_git();
         continue;
     }
     

@@ -1,3 +1,6 @@
+#!/usr/bin/env php
+#coding=utf-8
+
 <?php
 require_once('./language-list.php');
 require_once('./function.php');
@@ -223,3 +226,6 @@ foreach ($language_list as $language => $country) {
 //还原Git账号信息
 exec('git config --local user.name "Klavor Lee"');
 exec('git config --local user.email "lee@klavor.com"');
+
+//通知采集结果
+exec('../sendSms');

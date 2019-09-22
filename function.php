@@ -1,5 +1,5 @@
 <?php
-function file_get_contents_retry($url, $time = 3) {
+function file_get_contents_retry($url, $time = 5) {
 	$i = 0;
 	do {
 		echo 'retry time = '.$i.'; request url = '.$url.'

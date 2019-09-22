@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="referrer" content="origin" />
+	<title>Bing每日一图</title>
+	<link href="./resource/bing_logo.ico" rel="shortcut icon"/>
+</head>
+<body style="margin:0;padding:0">
+<div>
+    <img id="wallpaper"/>
+</div>
+<div style="position: fixed; bottom: 0px; left: 0px;">
+	<p id="copyright" style="max-width:400px; margin-left:20px; margin-bottom:30px; color:white; font-size:18px;"></p>
+    <p id="date" style="max-width:400px; margin-left:20px; margin-bottom:30px; color:white; font-size:12px;"></p>
+</div>
+<div id="load" style="position: fixed; bottom: 0px; left: 40%;">
+	<img src="./resource/loading.gif" />
+	<p id="tips" style="color:#DFDFDF; font-size:30px;"></p>
+</div>
+
+<div style="position: fixed; top: 40%;">
+	<img id="pre" onclick="preClick()"  onmousedown="preDown()" onmouseup="preUp()"  src="./resource/previous.svg" alt="Previous Wallpaper" />
+</div>
+<div style="position: fixed; top: 40%; right:0px">
+	<img id="next" onclick="nextClick()" onmousedown="nextDown()" onmouseup="nextUp()" src="./resource/next.svg" alt="Next Wallpaper" />
+</div>
+</body>
+</html>
+<script type="text/javascript">
+	function getQueryString(name) {
+		 var reg = new RegExp("(^|&)"+ name +"=([^&]*)(&|$)");
+		 var r = window.location.search.substr(1).match(reg);
+		 if (r != null) {
+			return unescape(r[2]);
+		 }
+	}
+	
+	function getAndSet(key) {
+		var value = getQueryString(key);
+		if (value == undefined || value == '' || value == null) {
+			value = localStorage.getItem(key);
+		} else {
+			localStorage.setItem(key, value);
+		}
+		return value;
+	}
+
+	function request(url, success, failure) {
+		var httpRequest = new XMLHttpRequest();
+		httpRequest.open('GET', url, true);
+		httpRequest.send();
+		httpRequest.onreadystatechange = function () {
+			if (httpRequest.readyState == 4) {
+				if (httpRequest.status == 200) {
+					var json = httpRequest.responseText;
+					success(json);
+				} else {
+					failure(httpRequest.status);
+				}
+			}
+		};
+	}
+
+	function getApiUrl(region, year, month, day) {
+	    if (region == undefined || region == '' || region == null) {
+		    region = 'zh-CN';
+		}
+		var url = 'https://daily-bing-wallpaper.devlang.org/' + region + '/api/' + year + '/' + month + '/' + year + '-' + month + '-' + day + '.json';
+		return url;
+	}
+	
+	function resizeWindow(){
+		//var winWidth = document.body.clientWidth;
+		//var winHeight = document.body.clientHeight;
+		var winWidth = document.documentElement.clientWidth;
+		var winHeight = document.documentElement.clientHeight;
+		var wallpaper = document.getElementById('wallpaper');
+		var imgWidth = 1080;
+		var imgHeight = 1920;
+		wallpaper.width = winWidth;
+		wallpaper.height = winHeight;
+    }
+	
+	function preClick() {
+		if (!isLoading) {
+			startLoading();
+			var preDate = new Date(date.getTime() - ONE_DAY);
+			tmpDate = preDate;
+			var preYear = preDate.getFullYear();
+			var preMonth = preDate.getMonth()+1;
+			if (preMonth < 10) {
+				preMonth = '0' + preMonth;
+			}
+			var preDay = preDate.getDate();
+			var url = getApiUrl(region, preYear, preMonth, preDay);
+			request(url, success, failure);
+		}
+	}
+	
+	function preDown() {
+		var pre = document.getElementById('pre');
+		pre.src = "./resource/previous-down.svg";
+	}
+	
+	function preUp() {
+		var pre = document.getElementById('pre');
+		pre.src = "./resource/previous.svg";
+	}
+	
+	function nextClick() {
+		if (!isLoading) {
+			startLoading();
+			var nextDate = new Date(date.getTime() + ONE_DAY);
+			tmpDate = nextDate;
+			var nextYear = nextDate.getFullYear();
+			var nextMonth = nextDate.getMonth()+1;
+			if (nextMonth < 10) {
+				nextMonth = '0' + nextMonth;
+			}
+			var nextDay = nextDate.getDate();
+			var url = getApiUrl(region, nextYear, nextMonth, nextDay);
+			request(url, success, failure);
+		}
+	}
+	
+	function nextDown() {
+		var next = document.getElementById('next');
+		next.src = "./resource/next-down.svg";
+	}
+	
+	function nextUp() {
+		var next = document.getElementById('next');
+		next.src = "./resource/next.svg";
+	}
+	
+	function endLoading() {
+		isLoading = false;
+	}
+	
+	function startLoading() {
+		isLoading = true;
+		var load = document.getElementById('load');
+		load.style.visibility = 'visible';
+		loading();
+	}
+	
+	function loading() {
+		var tips = document.getElementById('tips');
+		if (isLoading) {
+			loadCount = loadCount % 7;
+			
+			if (loadCount == 6) {
+				tips.innerText = LOADING_TIPS + '......';
+			} else if (loadCount == 5) {
+				tips.innerText = LOADING_TIPS + '.....';
+			} else if (loadCount == 4) {
+				tips.innerText = LOADING_TIPS + '....';
+			} else if (loadCount == 3) {
+				tips.innerText = LOADING_TIPS + '...';
+			} else if (loadCount == 2) {
+				tips.innerText = LOADING_TIPS + '..';
+			} else if (loadCount == 1) {
+				tips.innerText = LOADING_TIPS + '.';
+			} else {
+				tips.innerText = LOADING_TIPS;
+			}
+			loadCount++;
+			setTimeout(loading, 100);
+		} else {
+			var load = document.getElementById('load');
+			load.style.visibility = 'hidden';
+			tips.innerText = LOADING_TIPS;
+			loadCount = 0;
+		}
+	}
+</script>
+<script type="text/javascript">
+    var loadCount = 0;
+	var baseUrl = 'https://daily-bing-wallpaper.devlang.org';
+	var ONE_DAY = 24*60*60*1000;
+	var LOADING_TIPS = 'Bing wallpaper loding';
+    var isLoading = false;
+	var region = getAndSet('region');
+	var type = getQueryString('type');
+	var date;
+	var dateTime = getAndSet('date');
+	if (dateTime == undefined || dateTime == '' || dateTime == null) {
+	    date = new Date()
+	} else {
+	    date = new Date(parseInt(dateTime));
+	}
+	var tmpDate = date;
+	var year = date.getFullYear();
+	var month = date.getMonth() + 1;
+	if (month < 10) {
+		month = '0' + month;
+	}
+	var day = date.getDate();
+	var url = getApiUrl(region, year, month, day);
+	var success = function(json) {
+		var apiObj = JSON.parse(json);
+		
+		var wallpaper = document.getElementById('wallpaper');
+		if (type == 'bingtmp') {
+		    wallpaper.src = apiObj.image.bingtmb;
+		} else if (type == 'binghd') {
+			wallpaper.src = apiObj.image.binghd;
+		} else if (type == 'hd') {
+			wallpaper.src = baseUrl + apiObj.image.hd;
+		} else {
+			wallpaper.src = baseUrl + apiObj.image.tmp;
+		}
+		
+		var copyright = document.getElementById('copyright');
+		copyright.innerText = apiObj.copyright;
+		
+		var tdate = document.getElementById('date');
+		var tYear = apiObj.date.substr(0, 4);
+		var tMonth = apiObj.date.substr(4, 2);
+		var tDay = apiObj.date.substr(6, 2);
+		tdate.innerText = tYear + "-" + tMonth + "-" + tDay;
+		
+		date = tmpDate;
+		localStorage.setItem('date', date.getTime());
+		
+		var pre = document.getElementById('pre');
+		pre.style.visibility = 'visible';
+		var next = document.getElementById('next');
+		next.style.visibility = 'visible';
+		endLoading();
+	};
+	var failure = function(code) {
+		if (code == 404) {
+			if (date.getTime() == tmpDate.getTime()) {
+				var fDate = new Date(date.getTime() - ONE_DAY);
+				tmpDate = fDate;
+				var fYear = fDate.getFullYear();
+				var fMonth = fDate.getMonth()+1;
+				if (fMonth < 10) {
+					fMonth = '0' + fMonth;
+				}
+				var fDay = fDate.getDate();
+				var url = getApiUrl(region, fYear, fMonth, fDay);
+				request(url, success, failure);
+			} else if (date.getTime() > tmpDate.getTime()) {
+				var pre = document.getElementById('pre');
+				pre.style.visibility = 'hidden';
+				var wallpaper = document.getElementById('wallpaper');
+				//wallpaper.src = './resource/404.jpg';
+			} else {
+				var next = document.getElementById('next');
+				next.style.visibility = 'hidden';
+				var wallpaper = document.getElementById('wallpaper');
+				//wallpaper.src = './resource/404.jpg';
+			}
+		}
+		endLoading();
+	};
+	request(url, success, failure);
+	startLoading();
+	resizeWindow();
+</script>
+<script type="text/javascript">
+	document.documentElement.style.overflow='hidden';
+    document.body.style.overflow='hidden';
+	//window.addEventListener('resize', resizeWindow)
+	window.onresize = resizeWindow;
+</script>

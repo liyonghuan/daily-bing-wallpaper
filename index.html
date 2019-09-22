@@ -15,7 +15,7 @@
 	<p id="copyright" style="max-width:400px; margin-left:20px; margin-bottom:30px; color:white; font-size:18px;"></p>
     <p id="date" style="max-width:400px; margin-left:20px; margin-bottom:30px; color:white; font-size:12px;"></p>
 </div>
-<div id="load" style="position: fixed; bottom: 0px; left: 40%;">
+<div id="load" style="position: fixed; bottom: 0px; left: 40%; visibility:hidden">
 	<img src="./resource/loading.gif" />
 	<p id="tips" style="color:#DFDFDF; font-size:30px;"></p>
 </div>
@@ -150,23 +150,8 @@
 		var tips = document.getElementById('tips');
 		if (isLoading) {
 			loadCount = loadCount % 7;
-			
-			if (loadCount == 6) {
-				tips.innerText = LOADING_TIPS + '......';
-			} else if (loadCount == 5) {
-				tips.innerText = LOADING_TIPS + '.....';
-			} else if (loadCount == 4) {
-				tips.innerText = LOADING_TIPS + '....';
-			} else if (loadCount == 3) {
-				tips.innerText = LOADING_TIPS + '...';
-			} else if (loadCount == 2) {
-				tips.innerText = LOADING_TIPS + '..';
-			} else if (loadCount == 1) {
-				tips.innerText = LOADING_TIPS + '.';
-			} else {
-				tips.innerText = LOADING_TIPS;
-			}
-			loadCount++;
+		    tips.innerText = LOADING_TIPS.substr(0, LOADING_TIPS.length - 6 + loadCount);
+			loadCount ++;
 			setTimeout(loading, 100);
 		} else {
 			var load = document.getElementById('load');
@@ -180,7 +165,7 @@
     var loadCount = 0;
 	var baseUrl = 'https://daily-bing-wallpaper.devlang.org';
 	var ONE_DAY = 24*60*60*1000;
-	var LOADING_TIPS = 'Bing wallpaper loding';
+	var LOADING_TIPS = 'Bing wallpaper loding......';
     var isLoading = false;
 	var region = getAndSet('region');
 	var type = getQueryString('type');

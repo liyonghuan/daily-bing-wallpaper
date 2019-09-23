@@ -67,7 +67,7 @@
 	    if (region == undefined || region == '' || region == null) {
 		    region = 'zh-CN';
 		}
-		var url = 'https://daily-bing-wallpaper.devlang.org/' + region + '/api/' + year + '/' + month + '/' + year + '-' + month + '-' + day + '.json';
+		var url = './' + region + '/api/' + year + '/' + month + '/' + year + '-' + month + '-' + day + '.json';
 		return url;
 	}
 	
@@ -94,6 +94,9 @@
 				preMonth = '0' + preMonth;
 			}
 			var preDay = preDate.getDate();
+			if (preDay < 10) {
+				preDay = '0' + preDay;
+			}
 			var url = getApiUrl(region, preYear, preMonth, preDay);
 			request(url, success, failure);
 		}
@@ -120,6 +123,9 @@
 				nextMonth = '0' + nextMonth;
 			}
 			var nextDay = nextDate.getDate();
+			if (nextDay < 10) {
+				nextDay = '0' + nextDay;
+			}
 			var url = getApiUrl(region, nextYear, nextMonth, nextDay);
 			request(url, success, failure);
 		}
@@ -170,9 +176,9 @@
 		} else if (type == 'binghd') {
 			wallpaper.src = apiObj.image.binghd;
 		} else if (type == 'hd') {
-			wallpaper.src = baseUrl + apiObj.image.hd;
+			wallpaper.src = '.' + apiObj.image.hd;
 		} else {
-			wallpaper.src = baseUrl + apiObj.image.tmb;
+			wallpaper.src = '.' + apiObj.image.tmb;
 		}
 		
 		var copyright = document.getElementById('copyright');
@@ -224,7 +230,6 @@
 </script>
 <script type="text/javascript">
     var loadCount = 0;
-	var baseUrl = 'https://daily-bing-wallpaper.devlang.org';
 	var ONE_DAY = 24*60*60*1000;
 	var LOADING_TIPS = 'Bing wallpaper loding......';
     var isLoading = false;
@@ -247,6 +252,9 @@
 			month = '0' + month;
 		}
 		var day = date.getDate();
+		if (day < 10) {
+			day = '0' + day;
+		}
 		var url = getApiUrl(region, year, month, day);
 		request(url, success, failure);
 		startLoading();

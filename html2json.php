@@ -1,7 +1,10 @@
 <?php
-$dir = './html';
-for ($i = 1; $i < 1211; $i++) {
-    $path = $dir.'/'.$i.'.html';
+require_once('./lib/function.php');
+
+$files = scandir('html');
+define('ONE_DAY', 24 * 60 * 60);
+foreach ($files as $file) {
+    $path = 'html/'.$file;
     //echo $path;
     $input = file_get_contents($path);
     //echo $input;
@@ -16,7 +19,9 @@ for ($i = 1; $i < 1211; $i++) {
     $date_end_pos = strpos($input, '</strong>', $date_start_pos);
     //echo $date_end_pos;
     $date = substr($input, $date_start_pos, $date_end_pos - $date_start_pos);
-    $date--;
+    $date = date('Ymd', strtotime($date) - ONE_DAY);
+    echo $date.'
+';
     //echo $date;
     $search_start_pos = strpos($input, '<a href="', $date_end_pos) + 9;
     //echo $search_start_pos;
@@ -38,5 +43,5 @@ for ($i = 1; $i < 1211; $i++) {
     $obj->search = $search;
 
     $json = json_encode($obj, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-    file_put_contents('./json/'.$date.'.json', $json);
+    check_path_and_save('./json/'.$date.'.json', $json);
 }

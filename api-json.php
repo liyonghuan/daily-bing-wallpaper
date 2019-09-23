@@ -1,12 +1,17 @@
-<?
+<?php
+require_once('./lib/function.php');
+
 $json_root_dir = './json';
 $api_root_dir = './api';
 $files = scandir($json_root_dir);
 //var_dump($files);
+//return;
 $tmp_count = 0;
 foreach ($files as $file_name) {
+    if ($file_name == '.' || $file_name == '..') continue;
     $file_path = $json_root_dir.'/'.$file_name;
     $file_content = file_get_contents($file_path);
+    if ($file_content === false) continue;
     //echo $file_content;
     $file_json = json_decode($file_content, false);
     //var_dump($file_json);
@@ -18,9 +23,6 @@ foreach ($files as $file_name) {
     $month = substr($date, 4, 2);
     $day = substr($date, -2);
     $folder = 'cn/'.$year.'/'.$month;
-    if (!file_exists($folder)) {
-        mkdir($folder, 777, true);
-    }
     $name_start_pos = strpos($link, '/th?id=');
     if ($name_start_pos === false) {
         $name_start_pos = strrpos($link, '/') + 1;
@@ -33,43 +35,77 @@ foreach ($files as $file_name) {
     
     $api_obj = new stdClass();
     $cr = $copyright;
-    $copyright_divider_pos = strpos($cr, '<br/>');
+    $copyright_divider_pos = strpos($cr, '<br/>');;
     if ($copyright_divider_pos === false) {
         $copyright = $cr;
-        unset($desc);
     } else {
         $copyright = substr($cr, 0, $copyright_divider_pos);
         $desc = substr($cr, $copyright_divider_pos + 5);
+        $api_obj->desc = $desc;
     }
 
     $s_pos = strpos($copyright, '(');
     $title = substr($copyright, 0, $s_pos);
     $copyrightonly = substr($copyright, $s_pos + 1, -1);
     
-    $api_obj->title = $title;
-    $api_obj->caption = $title;
-    $api_obj->desc = $desc;
+    //$api_obj->title = $title;
+    //$api_obj->caption = $title;
     $api_obj->copyright = $copyright;
     $api_obj->copyrightonly = $copyrightonly;
-    $api_obj->date = $date;
+    $api_obj->date = $date.'';
+    $api_obj->divider = 1;
 
     $prefix = 'OHR.';
-    $tmp_image_name = $downloan_image_name;
-    $prefix_pos = strpos($tmp_image_name, $prefix);
-    if ($prefix_pos === false) {
-        $tmp_image_name = $prefix.$tmp_image_name;
-    }
-    $tmp_path = 'cn/'.$year.'/'.$month.'/'.$tmp_image_name.'_tmb.jpg';
-
-    $image = new stdClass();
-    $image->hd = '/cn/'.$year.'/'.$month.'/'.$downloan_image_name.'.jpg';
+    $name = $downloan_image_name;
+    if ($prefix != substr($downloan_image_name, 0, 4)) {
+        $name = $prefix.$downloan_image_name;
+   }
     
-    echo 'tmp_path = '.$tmp_path.'
-';
-    if (file_exists($tmp_path)) {
-        $tmp_count++;
-        $image->tmb = '/'.$tmp_path;
+    $image = new stdClass();
+    $image->name = $name;
+    
+    $hd_url = 'tmp/'.$downloan_image_name.'.jpg'; 
+    $hd_response = request($hd_url, 2);
+    if ($hd_response === faslse) {
+        $hd_url = 'tmp/'.$name.'.jpg';
+        $hd_response = request($hd_url, 2);
     }
+    if ($hd_response !== false) {
+        $hash = strtoupper(hash('sha256', $hd_response));
+        $hd_result = check_image_and_save('images/'.$hash.'.jpg', $hd_response);
+        if ($hd_result !== false) {
+            $image->hd = '/images/'.$hash.'.jpg';
+        }
+    }
+
+    $hd_origin_url = 'https://www.bing.com/th?id='.$name.'_1920x1080.jpg&rf=LaDigue_1920x1080.jpg&pid=hp';
+    //$hd_origin_resposne = request($hd_origin_url, 2);
+    //if ($hd_origin_response !==false) {
+    //    $image->binghd = $hd_origin_url;
+    //}
+    $image->binghd = $hd_origin_url;
+
+    $tmb_url = 'tmb/'.$downloan_image_name.'_tmb.jpg';
+    $tmb_response = request($tmb_url);
+    if ($tmb_response === false) {
+        $tmb_url = 'tmb/'.$name.'_tmb.jpg';
+        $tmb_response = request($tmb_url);
+    }
+    if ($tmb_response !== false) {
+        $hash = strtoupper(hash('sha256', $tmb_response));
+        $tmb_result = check_image_and_save('images/'.$hash.'.jpg', $tmb_response);
+        if ($tmb_result !== false) {
+            $image->tmb = '/images/'.$hash.'.jpg';
+        }
+    }
+
+    $tmb_origin_url = 'https://www.bing.com/th?id='.$name.'_tmb.jpg';
+    //$tmb_origin_resposne = request($tmb_origin_url, 2);
+    //if ($tmb_origin_response !==false) {
+    //    $image->bingtmb = $tmb_origin_url;
+    //}
+    $image->bingtmb = $tmb_origin_url;
+    
     $api_obj->image = $image;
 
     echo 'title = '.$api_obj->title.'
@@ -91,12 +127,8 @@ foreach ($files as $file_name) {
     echo '-------------------
 ';
     $json = json_encode($api_obj, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-    $api_folder = './api/'.$year.'/'.$month;
-    if (!file_exists($api_folder)) {
-        mkdir($api_folder, 777, true);
-    }
-    $api_path = $api_folder.'/'.$year.'-'.$month.'-'.$day.'.json';
-    file_put_contents($api_path, $json);
+    check_path_and_save('./zh-CN/api/'.$year.'/'.$month.'/'.$year.'-'.$month.'-'.$day.'.json', $json);
+
     
 
 //    if (!file_exists($image_path)) {

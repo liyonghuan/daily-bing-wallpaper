@@ -1,9 +1,17 @@
-<?
+<?php
+require_once('./lib/function.php');
+
 $json_root_dir = './json';
 $api_root_dir = './api';
 $files = scandir($json_root_dir);
 //var_dump($files);
+
+$total = 0;
+$count = 0;
+
 foreach ($files as $file_name) {
+    $total++;
+
     $file_path = $json_root_dir.'/'.$file_name;
     $file_content = file_get_contents($file_path);
     //echo $file_content;
@@ -39,15 +47,14 @@ foreach ($files as $file_name) {
     $tmp_downloan_url = str_replace('${name}', $downloan_image_name, $tmp_url);
     echo $tmp_downloan_url.'
 ';
-    $dl_path = 'cn/'.$year.'/'.$month.'/'.$downloan_image_name.'_tmb.jpg';
+    $dl_path = 'tmb/'.$downloan_image_name.'_tmb.jpg';
     echo $dl_path.'
 ';
+    $response = request($tmp_downloan_url);
+    $image_result = check_image_and_save($dl_path,);
 
-    if (!file_exists($dl_path)) {
-        $dl_cmd = 'wget -O '.$dl_path.' "'.$tmp_downloan_url.'"';
-        echo $dl_cmd.'
-';
-        exec($dl_cmd); 
+    if ($image_result !== false) {
+        $count++;
     }
 
 
@@ -116,3 +123,6 @@ foreach ($files as $file_name) {
 //    echo '-------------------
 //';
 }
+
+echo 'total:'.$total.' count:'.$count.'
+';

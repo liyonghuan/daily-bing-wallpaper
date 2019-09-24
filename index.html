@@ -16,7 +16,7 @@
     <p id="date" style="max-width:400px; margin-left:20px; margin-bottom:30px; color:white; font-size:12px;"></p>
 </div>
 <div id="load" style="position: fixed; bottom: 0px; left: 40%; visibility:hidden">
-	<img id="loaing"/>
+	<img id="loaing" src="./resource/loading.gif"/>
 	<p id="tips" style="color:#DFDFDF; font-size:30px;"></p>
 </div>
 
@@ -149,8 +149,6 @@
 		isLoading = true;
 		var load = document.getElementById('load');
 		load.style.visibility = 'visible';
-		var foo = document.getElementById('loaing');
-		foo.src = "./resource/loading.gif";
 		loading();
 	}
 	

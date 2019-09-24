@@ -7,7 +7,7 @@
 	<title>Bing每日一图</title>
 	<link href="./resource/bing_logo.ico" rel="shortcut icon"/>
 </head>
-<body style="margin:0;padding:0">
+<body style="margin:0;padding:0; background: #999999">
 <div>
     <img id="wallpaper"/>
 </div>
@@ -16,7 +16,7 @@
     <p id="date" style="max-width:400px; margin-left:20px; margin-bottom:30px; color:white; font-size:12px;"></p>
 </div>
 <div id="load" style="position: fixed; bottom: 0px; left: 40%; visibility:hidden">
-	<img src="./resource/loading.gif" />
+	<img id="loaing"/>
 	<p id="tips" style="color:#DFDFDF; font-size:30px;"></p>
 </div>
 
@@ -149,6 +149,8 @@
 		isLoading = true;
 		var load = document.getElementById('load');
 		load.style.visibility = 'visible';
+		var foo = document.getElementById('loaing');
+		foo.src = "./resource/loading.gif";
 		loading();
 	}
 	
@@ -233,36 +235,32 @@
 	var ONE_DAY = 24*60*60*1000;
 	var LOADING_TIPS = 'Bing wallpaper loding......';
     var isLoading = false;
-	var region = getAndSet('region');
+	var region = getQueryString('region');
 	var type = getQueryString('type');
 	var date;
-	var dateTime = getAndSet('date');
+	var dateTime = getQueryString('date');
 	if (dateTime == undefined || dateTime == '' || dateTime == null) {
 	    date = new Date()
 	} else {
 	    date = new Date(parseInt(dateTime));
 	}
 	var tmpDate = date;
-</script>
-<script type="text/javascript">
-    window.onload = function() {
-		var year = date.getFullYear();
-		var month = date.getMonth() + 1;
-		if (month < 10) {
-			month = '0' + month;
-		}
-		var day = date.getDate();
-		if (day < 10) {
-			day = '0' + day;
-		}
-		var url = getApiUrl(region, year, month, day);
-		request(url, success, failure);
-		startLoading();
-		resizeWindow();
-		
-		document.documentElement.style.overflow='hidden';
-		document.body.style.overflow='hidden';
-		//window.addEventListener('resize', resizeWindow)
-		window.onresize = resizeWindow;
+	var year = date.getFullYear();
+	var month = date.getMonth() + 1;
+	if (month < 10) {
+		month = '0' + month;
 	}
+	var day = date.getDate();
+	if (day < 10) {
+		day = '0' + day;
+	}
+	var url = getApiUrl(region, year, month, day);
+	request(url, success, failure);
+	startLoading();
+	
+	document.documentElement.style.overflow='hidden';
+	document.body.style.overflow='hidden';
+	//window.addEventListener('resize', resizeWindow)
+	resizeWindow();
+	window.onresize = resizeWindow;
 </script>

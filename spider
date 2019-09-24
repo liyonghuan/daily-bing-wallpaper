@@ -3,7 +3,6 @@
 <?php
 require_once('./lib/languages.php');
 require_once('./lib/function.php');
-require_once('./lib/log.php');
 
 define('IMAGE_DIR', 'images');
 define('API_DIR', 'api');
@@ -12,17 +11,11 @@ define('VIRGULE', '/');
 define('HYPHEN', '-');
 define('EXT_IMAGE','.jpg');
 define('EXT_JSON', '.json');
-
-$opt = getopt('', array('debug', 'log', 'print', 'sms', 'idx:','n:'));
+$opt = getopt('', array('debug', 'idx:','n:'));
 //var_dump($opt);
-$is_save_log = isset($opt['log']);
-$is_print_log = isset($opt['print']);
 $is_debug = isset($opt['debug']);
 $idx = isset($opt['idx']) ? $opt['idx'] : 0;
 $n = isset($opt['n']) ? $opt['n'] : 1;
-
-logi('Hello World!');
-
 if (!$is_debug) {
     //清除未提交数据，防止脏数据
     exec('git add --all .');
@@ -33,25 +26,20 @@ if (!$is_debug) {
     //更新git代码
     exec('git pull');
 }
-
 $global_domain = 'https://global.bing.com';
 $bing_domain = 'https://www.bing.com';
 $algo = 'sha256';
-
 $languages = get_languages();
 //var_dump($languages);
-//FIXME 测试代码
 if ($is_debug) {
     $languages = array("zh-CN"=>"CN");
 }
-
 //采集结果统计
 $hd_count = 0;
 $tmb_count = 0;
 $api_count = 0;
 $failure_count = 0;
 $total_count = 0;
-
 foreach ($languages as $lang_region => $region) {
 //    echo $lang_region.':'.$region.'
 //';
@@ -101,7 +89,6 @@ foreach ($languages as $lang_region => $region) {
         
         //获取bing原文件名。：OHR.FeatherSerpent_ZH-CN5706017355
         $image_name = substr(strrchr($urlbase, '='), 1) . '.jpg';
-
         //拼接对外公布的接口数据
         $api_obj                = new stdClass();
         $api_obj->title         = $title;
@@ -117,7 +104,6 @@ foreach ($languages as $lang_region => $region) {
         $api_obj_image->binghd  = null;
         $api_obj_image->bingtmb = $og_img;
         $api_obj->image         = $api_obj_image;
-
         //拼接图片地址
         $image_url = $bing_domain.$url;
         $api_obj_image->binghd = $image_url;
@@ -160,7 +146,6 @@ foreach ($languages as $lang_region => $region) {
         if ($api_save_result !== false) {
             $api_count++;
         }
-
         echo 'Total: '.(sizeof($languages) * $n).'    Current: '.$total_count.'
 ';
     }
@@ -171,13 +156,11 @@ foreach ($languages as $lang_region => $region) {
     $year  = substr($temp_startdate, 0, 4);
     $month = substr($temp_startdate, 4, 2);
     $day   = substr($temp_startdate, -2);
-
     $origin_path = $lang_region
         .VIRGULE.ORIGIN_DIR
         .VIRGULE.$year
         .VIRGULE.$month
         .VIRGULE.$year.HYPHEN.$month.HYPHEN.$day.EXT_JSON;
-
     check_path_and_save($origin_path, $response);
 }
 if (!$is_debug) {
@@ -210,11 +193,4 @@ if (!$is_debug) {
     //切换git用户信息
     exec('git config --local user.name "Klavor Lee"');
     exec('git config --local user.email "lee@klavor.com"');
-    
-    $opt = getopt('', array('sms'));
-    if (isset($sms_opt['sms'])) {
-        //采集结果通知
-        exec('../sendSMS');
-        logi('Send SMS Success!');
-    }
 }

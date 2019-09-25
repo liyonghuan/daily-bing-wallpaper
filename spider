@@ -11,9 +11,10 @@ define('VIRGULE', '/');
 define('HYPHEN', '-');
 define('EXT_IMAGE','.jpg');
 define('EXT_JSON', '.json');
-$opt = getopt('', array('debug', 'idx:','n:'));
+$opt = getopt('', array('debug', 'sms', 'idx:','n:'));
 //var_dump($opt);
 $is_debug = isset($opt['debug']);
+$is_sms = isset($opt['sms']);
 $idx = isset($opt['idx']) ? $opt['idx'] : 0;
 $n = isset($opt['n']) ? $opt['n'] : 1;
 if (!$is_debug) {
@@ -21,8 +22,8 @@ if (!$is_debug) {
     exec('git add --all .');
     exec('git reset --hard HEAD');
     //切换git用户信息
-    exec('git config --local user.name "Sprider"');
-    exec('git config --local user.email "sprider@klavor"');
+    exec('git config --local user.name "Spider"');
+    exec('git config --local user.email "spider@klavor.com"');
     //更新git代码
     exec('git pull');
 }
@@ -193,4 +194,7 @@ if (!$is_debug) {
     //切换git用户信息
     exec('git config --local user.name "Klavor Lee"');
     exec('git config --local user.email "lee@klavor.com"');
+}
+if ($is_sms) {
+    exec('../sendSMS');
 }

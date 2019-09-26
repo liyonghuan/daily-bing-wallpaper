@@ -18,17 +18,6 @@ $is_debug = isset($opt['debug']);
 $idx = isset($opt['idx']) ? $opt['idx'] : 0;
 $n = isset($opt['n']) ? $opt['n'] : 1;
 
-if (!$is_debug) {
-    //清除未提交数据，防止脏数据
-    exec('git add --all .');
-    exec('git reset --hard HEAD');
-    //切换git用户信息
-    exec('git config --local user.name "Sprider"');
-    exec('git config --local user.email "sprider@klavor"');
-    //更新git代码
-    exec('git pull');
-}
-
 $global_domain = 'https://global.bing.com';
 $bing_domain = 'https://www.bing.com';
 $algo = 'sha256';
@@ -174,34 +163,24 @@ foreach ($languages as $lang_region => $region) {
 
     check_path_and_save($origin_path, $response);
 }
-if (!$is_debug) {
-    //提交爬取数据
-    exec('git add --all .');
-    $comment = date('Y-m-d H:i');
-    $comment .= ($hd_count == $total_count && $tmb_count == $total_count && $api_count == $total_count) ? '符合预期结果!
-' : '数据有出入，需要进行数据检查!
+$comment = '数据采集统计
 ';
-    $comment .= '入参：
+$comment .= '入参：
 ';
-    $comment .= '    idx = '.$idx.'
+$comment .= '    idx = '.$idx.'
 ';
-    $comment .= '    n = '.$n.'
+$comment .= '    n = '.$n.'
 ';
-    $comment .= '结果：
+$comment .= '结果：
 ';
-    $comment .= '    HD\TMB\API理论值：'.$total_count.'
+$comment .= '    HD\TMB\API理论值：'.$total_count.'
 ';
-    $comment .= '    HD实际值        ：'.$hd_count.'
+$comment .= '    HD实际值        ：'.$hd_count.'
 ';
-    $comment .= '    TMB实际值       ：'.$tmb_count.'
+$comment .= '    TMB实际值       ：'.$tmb_count.'
 ';
-    $comment .= '    API实际值       ：'.$api_count.'
+$comment .= '    API实际值       ：'.$api_count.'
 ';
-    $comment .= '    接口失败值      ：'.$failure_count.'
+$comment .= '    接口失败值      ：'.$failure_count.'
 ';
-    exec('git commit -m "'.$comment.'"');
-    exec('git push');
-    //切换git用户信息
-    exec('git config --local user.name "Klavor Lee"');
-    exec('git config --local user.email "lee@klavor.com"');
-}
+echo $comment;

@@ -4,6 +4,9 @@
 require_once('./lib/function.php');
 require_once('./lib/languages.php');
 
+exec('git config --local user.name "Spider"');
+exec('git config --local user.email "spider@klavor.com"');
+
 $languages = get_languages();
 $bing_url = 'https://global.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&uhd=0';
 $bing_domain = 'https://www.bing.com';
@@ -37,4 +40,8 @@ foreach ($languages as $lang_region => $region) {
     check_path_and_save('json/'.$lang_region.'-'.date('Y-m-d', strtotime($json->images[0]->startdate)).'.json', $big_json);
 }
  
-
+exec('git add --all .');
+exec('git commit -m "Add big images"');
+exec('git push');
+exec('git config --local user.name "Klavor Lee"');
+exec('git config --local user.email "lee@klavor.com"');

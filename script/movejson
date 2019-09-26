@@ -1,0 +1,14 @@
+#!/bin/php
+
+<?php
+$files = scanDir('.');
+foreach ($files as $file) {
+  $pos = strpos($file, '-');
+  if ($pos == false) {
+    echo $file.':false
+';
+    continue;
+  }
+  exec('mv '.$file.'/api api/'.$file);
+  exec('mv '.$file.'/origin origin/'.$file);
+}

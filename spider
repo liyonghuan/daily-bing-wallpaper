@@ -134,8 +134,8 @@ foreach ($languages as $lang_region => $region) {
         
         //保存api数据
         //1.构建api存储路径
-        $api_path = $lang_region
-            .VIRGULE.API_DIR
+        $api_path = API_DIR
+            .VIRGULE.$lang_region
             .VIRGULE.$year
             .VIRGULE.$month
             .VIRGULE.$year.HYPHEN.$month.HYPHEN.$day.EXT_JSON;
@@ -157,8 +157,8 @@ foreach ($languages as $lang_region => $region) {
     $year  = substr($temp_startdate, 0, 4);
     $month = substr($temp_startdate, 4, 2);
     $day   = substr($temp_startdate, -2);
-    $origin_path = $lang_region
-        .VIRGULE.ORIGIN_DIR
+    $origin_path = ORIGIN_DIR
+        .VIRGULE.$lang_region
         .VIRGULE.$year
         .VIRGULE.$month
         .VIRGULE.$year.HYPHEN.$month.HYPHEN.$day.EXT_JSON;

@@ -41,6 +41,8 @@ $tmb_count = 0;
 $api_count = 0;
 $failure_count = 0;
 $total_count = 0;
+$hd_hash_array = array();
+$tmb_hash_array = array();
 foreach ($languages as $lang_region => $region) {
 //    echo $lang_region.':'.$region.'
 //';
@@ -105,33 +107,53 @@ foreach ($languages as $lang_region => $region) {
         $api_obj_image->binghd  = null;
         $api_obj_image->bingtmb = $og_img;
         $api_obj->image         = $api_obj_image;
+        
+
+        $hash_key = substr($image_name, 0, strrpos($image_name, '_'));
+
         //拼接图片地址
         $image_url = $bing_domain.$url;
         $api_obj_image->binghd = $image_url;
-        //请求数据
-        $image_response = request($image_url);
-        if ($image_response !== false) {
-            $image_hash = strtoupper(hash($algo, $image_response));
-            $image_path = IMAGE_DIR.VIRGULE.$image_hash.EXT_IMAGE;
-            $image_save_result = check_image_and_save($image_path, $image_response);
-            if ($image_save_result !== false) {
-                $hd_count++;
-            }
-            $api_obj_image->hd = VIRGULE.$image_path;
-        }
         
-        //TMB图下载
-        $og_image_response =request($og_img);
-        if ($image_response !== false) {
-            $og_image_hash = strtoupper(hash($algo, $og_image_response));
-            $og_image_path = IMAGE_DIR.VIRGULE.$og_image_hash.EXT_IMAGE;
-            $og_image_save_result = check_image_and_save($og_image_path, $og_image_response);
-            if ($og_image_save_result !== false) {
-                $tmb_count++;
+        if (!array_key_exists($hash_key, $hd_hash_array)) {
+            //请求数据
+            $image_response = request($image_url);
+            if ($image_response !== false) {
+                $image_hash = strtoupper(hash($algo, $image_response));
+                $hd_hash_array[$hash_key] = $image_hash;
+                $image_path = IMAGE_DIR.VIRGULE.$image_hash.EXT_IMAGE;
+                $image_save_result = check_image_and_save($image_path, $image_response);
+                if ($image_save_result !== false) {
+                    $hd_count++;
+                }
+                $api_obj_image->hd = VIRGULE.$image_path;
             }
-            $api_obj_image->tmb = VIRGULE.$og_image_path;
+        } else {
+            $hd_count++;
+            $image_hash = $hd_hash_array[$hash_key];
+            $api_obj_image->hd = VIRGULE.IMAGE_DIR.VIRGULE.$image_hash.EXT_IMAGE;
         }
-        
+
+
+        if (!array_key_exists($hash_key, $tmb_hash_array)) {
+            //TMB图下载
+            $og_image_response =request($og_img);
+            if ($image_response !== false) {
+                $og_image_hash = strtoupper(hash($algo, $og_image_response));
+                $tmb_hash_array[$hash_key] = $og_image_hash;
+                $og_image_path = IMAGE_DIR.VIRGULE.$og_image_hash.EXT_IMAGE;
+                $og_image_save_result = check_image_and_save($og_image_path, $og_image_response);
+                if ($og_image_save_result !== false) {
+                    $tmb_count++;
+                }
+                $api_obj_image->tmb = VIRGULE.$og_image_path;
+            }
+        } else {
+            $tmb_count++;
+            $og_image_hash = $tmb_hash_array[$hash_key];
+            $api_obj_image->tmb = VIRGULE.IMAGE_DIR.VIRGULE.$og_image_hash.EXT_IMAGE;
+        }
+
         //保存api数据
         //1.构建api存储路径
         $api_path = API_DIR

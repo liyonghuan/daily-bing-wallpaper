@@ -8,7 +8,7 @@ exec('git config --local user.name "Spider"');
 exec('git config --local user.email "spider@klavor.com"');
 
 $languages = get_languages();
-$bing_url = 'https://global.bing.com/HPImageArchive.aspx?format=js&idx=6&n=7&uhd=0';
+$bing_url = 'https://global.bing.com/HPImageArchive.aspx?format=js&idx=5&n=7&uhd=0';
 $bing_domain = 'https://www.bing.com';
 foreach ($languages as $lang_region => $region) {
     $url = $bing_url.'&setmkt='.$lang_region.'&setlang='.$lang_region;

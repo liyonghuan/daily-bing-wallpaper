@@ -8,7 +8,7 @@ exec('git config --local user.name "Spider"');
 exec('git config --local user.email "spider@klavor.com"');
 
 $languages = get_languages();
-$bing_url = 'https://global.bing.com/HPImageArchive.aspx?format=js&idx=0&n=7&uhd=0';
+$bing_url = 'https://global.bing.com/HPImageArchive.aspx?format=js&idx=7&n=7&uhd=0';
 $bing_domain = 'https://www.bing.com';
 foreach ($languages as $lang_region => $region) {
     $url = $bing_url.'&setmkt='.$lang_region.'&setlang='.$lang_region;
@@ -17,27 +17,30 @@ foreach ($languages as $lang_region => $region) {
 	continue;
     }
     $json = json_decode($response, false);
-    $big_url = $json->images[0]->url;
-    $big_url = str_replace('1920x1080', 'UHD', $big_url);
+    $images = $json->images;
+    foreach ($images as $image) {
+        $big_url = $image->url;
+        $big_url = str_replace('1920x1080', 'UHD', $big_url);
     
-    $big_response = request($bing_domain.$big_url);
-    if ($big_response === false) {
-        continue;
-    }
+        $big_response = request($bing_domain.$big_url);
+        if ($big_response === false) {
+            continue;
+        }
 
-    $hash = hash('sha256', $big_response);
-    check_image_and_save('images/'.$hash.'.jpg', $big_response);
+        $hash = hash('sha256', $big_response);
+        check_image_and_save('images/'.$hash.'.jpg', $big_response);
 
-    $urlbase = $json->images[0]->urlbase;
-    $name = substr($urlbase, strpos($urlbase, '=') + 1);
-    echo $name.'
+        $urlbase = $image->urlbase;
+        $name = substr($urlbase, strpos($urlbase, '=') + 1);
+        echo $name.'
 ';
     
-    $big_obj = new stdClass();
-    $big_obj->name = $name;
-    $big_obj->hash = $hash;
-    $big_json = json_encode($big_obj);
-    check_path_and_save('json/'.$lang_region.'-'.date('Y-m-d', strtotime($json->images[0]->startdate)).'.json', $big_json);
+        $big_obj = new stdClass();
+        $big_obj->name = $name;
+        $big_obj->hash = $hash;
+        $big_json = json_encode($big_obj);
+        check_path_and_save('json/'.$lang_region.'-'.date('Y-m-d', strtotime($json->images[0]->startdate)).'.json', $big_json);
+    }
 }
  
 exec('git add --all .');

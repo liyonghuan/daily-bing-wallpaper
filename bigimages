@@ -39,7 +39,7 @@ foreach ($languages as $lang_region => $region) {
         $big_obj->name = $name;
         $big_obj->hash = $hash;
         $big_json = json_encode($big_obj);
-        check_path_and_save('json/'.$lang_region.'-'.date('Y-m-d', strtotime($json->images[0]->startdate)).'.json', $big_json);
+        check_path_and_save('json/'.$lang_region.'-'.date('Y-m-d', strtotime($image->startdate)).'.json', $big_json);
     }
 }
  
